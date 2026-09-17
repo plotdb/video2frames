@@ -1,0 +1,6 @@
+.*.swp
+.swp
+*.log
+node_modules
+.fedep
+.DS_Store
