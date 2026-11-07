@@ -165,6 +165,28 @@ class Video2Frames {
     return !!this._mp4box;
   }
 
+  /**
+   * 有些 mp4 在 moov 之後補了一大段 0 ( padding )。mp4box 會把每 8 個 byte 當成 size 0、type 空白的 box，
+   * 每個都印一次 "Unlimited box size not supported"，一個檔案可以印上千行。
+   * 沿著頂層 box 走，遇到 type 全是 0 的就從那裡截掉；其他情況 ( 含截斷的檔案 ) 原樣交給 mp4box。
+   */
+  _trimPadding(buffer) {
+    const dv = new DataView(buffer);
+    const len = buffer.byteLength;
+    let i = 0;
+    while (i + 8 <= len) {
+      if (!dv.getUint32(i + 4)) return i > 0 ? buffer.slice(0, i) : buffer;
+      let size = dv.getUint32(i);
+      if (size === 1) {
+        if (i + 16 > len) break;
+        size = Number(dv.getBigUint64(i + 8));
+      } else if (size === 0) break;
+      if (size < 8) break;
+      i += size;
+    }
+    return buffer;
+  }
+
   /** mp4box 把容器拆成 track info + encoded samples。 */
   _demux(buffer) {
     const MP4Box = this._mp4box;
@@ -185,6 +207,7 @@ class Video2Frames {
         for (const s of list) samples.push(s);
       };
 
+      buffer = this._trimPadding(buffer);
       buffer.fileStart = 0;
       file.appendBuffer(buffer);
       file.flush();
