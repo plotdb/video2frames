@@ -1,6 +1,6 @@
 {
   "name": "@plotdb/video2frames",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "extract frames from a video in the browser, with webcodecs / ffmpeg-wasm / video-seek fallback",
   "browser": "dist/index.min.js",
   "main": "dist/index.js",

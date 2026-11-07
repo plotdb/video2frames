@@ -47,7 +47,7 @@ class Video2Frames {
    * @param {Object} opt
    * @param {number} [opt.count]      - 平均取幾格（與 times 二擇一）
    * @param {number[]|Function} [opt.times] - 指定時間點（秒），或 (duration) => number[]
-   * @param {number} [opt.size=0]     - 輸出正方形邊長；0 = 用影片原尺寸
+   * @param {number} [opt.size=0]     - 輸出正方形邊長；0 = 用影片原尺寸 ( 長方形，不補邊 )
    * @param {number} [opt.smooth=0]   - 抽格時的 blur 半徑（px）
    * @param {Function} [opt.onProgress] - (done, total, strategy)
    * @returns {Promise<{frames: ImageData[], duration, width, height, strategy}>}
@@ -105,30 +105,33 @@ class Video2Frames {
     return out;
   }
 
-  _canvas(size) {
+  _canvas(w, h) {
     if (typeof document !== 'undefined') {
       const c = document.createElement('canvas');
-      c.width = c.height = size;
+      c.width = w;
+      c.height = h;
       return c;
     }
-    return new OffscreenCanvas(size, size);
+    return new OffscreenCanvas(w, h);
   }
 
-  /** 把一張影像置中畫進正方形畫布，回傳 ImageData。 */
+  /** 有 size：置中畫進 size x size 的正方形畫布 ( 空白補 background )；size 為 0：原尺寸照畫，不補邊。回傳 ImageData。 */
   _draw(src, srcW, srcH, opt) {
-    const size = opt.size || Math.max(srcW, srcH);
-    const c = this._canvas(size);
+    const size = opt.size || 0;
+    const cw = size || srcW;
+    const ch = size || srcH;
+    const c = this._canvas(cw, ch);
     const ctx = c.getContext('2d');
     ctx.filter = 'none';
     ctx.fillStyle = this.options.background;
-    ctx.fillRect(0, 0, size, size);
+    ctx.fillRect(0, 0, cw, ch);
     if (opt.smooth > 0) ctx.filter = `blur(${opt.smooth}px)`;
-    const scale = Math.min(size / srcW, size / srcH);
+    const scale = size ? Math.min(size / srcW, size / srcH) : 1;
     const w = srcW * scale;
     const h = srcH * scale;
-    ctx.drawImage(src, (size - w) / 2, (size - h) / 2, w, h);
+    ctx.drawImage(src, (cw - w) / 2, (ch - h) / 2, w, h);
     ctx.filter = 'none';
-    return ctx.getImageData(0, 0, size, size);
+    return ctx.getImageData(0, 0, cw, ch);
   }
 
   async _blob(source) {
