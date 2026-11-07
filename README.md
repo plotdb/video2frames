@@ -57,7 +57,7 @@
    - `options.count`：平均取幾格（與 `times` 二擇一）
    - `options.times`：指定時間點陣列（秒），或 `(duration) => number[]`。
      影片長度要解開容器才知道，給函式就不必為了算時間點先 `probe()` 一次
-   - `options.size`：輸出正方形邊長；`0` = 用影片原尺寸
+   - `options.size`：輸出正方形邊長；`0` = 用影片原尺寸 ( 長方形，不補邊 )
    - `options.smooth`：抽格時的 blur 半徑（px）。h264 在平塗邊緣留下的噪點
      會讓後續的向量化描出鋸齒，輕微模糊可以壓掉
    - `options.onProgress(done, total, strategy)`
